@@ -1,9 +1,6 @@
 package com.xxbb.framework.v2;
 
-import com.xxbb.framework.annotation.AutoWired;
-import com.xxbb.framework.annotation.Controller;
-import com.xxbb.framework.annotation.RequestMapping;
-import com.xxbb.framework.annotation.Service;
+import com.xxbb.framework.annotation.*;
 import com.xxbb.framework.utils.StringUtils;
 
 import javax.servlet.ServletConfig;
@@ -12,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -271,5 +269,38 @@ public class DispatcherServlet extends HttpServlet {
         Map<String,String[]> params=req.getParameterMap();
         //获取方法的形参列表
         Class<?>[] parameterTypes=method.getParameterTypes();
+        //保存请求的url参数列表
+        Map<String,String[]> parameterMap=req.getParameterMap();
+        //保存赋值参数的位置
+        Object[] paramValues=new Object[parameterTypes.length];
+        //根据参数位置动态赋值
+        for(int i=0;i<parameterTypes.length;i++){
+            Class<?> parameterType=parameterTypes[i];
+            if(parameterType==HttpServletRequest.class){
+                paramValues[i]=req;
+            }else if(parameterType==HttpServletResponse.class){
+                paramValues[i]=resp;
+            }else if(parameterType==String.class){
+                //提取方法中加了注解的参数
+                Annotation[][] annotations=method.getParameterAnnotations();
+                for(int j=0;j<annotations.length;j++){
+                    for(Annotation annotation:annotations[i]){
+                        if(annotation instanceof RequestParam){
+                            String paramName=((RequestParam)annotation).value().trim();
+                            if(!"".equals(paramName)){
+                                String value=Arrays.toString(parameterMap.get(paramName))
+                                        .replace("\\[|\\]","")
+                                        .replace("\\s","");
+                                paramValues[i]=value;
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        //通过反射获取Method所在类及其类名
+        String beanName=StringUtils.firstCharToLowerCase(method.getDeclaringClass().getSimpleName());
+        method.invoke(ioc.get(beanName),req,resp,params.get("name")[0]);
     }
 }
