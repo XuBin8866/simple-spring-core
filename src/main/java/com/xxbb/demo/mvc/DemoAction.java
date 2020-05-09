@@ -23,7 +23,7 @@ public class DemoAction {
         try {
             resp.getWriter().write(result);
         }catch (Exception e){
-            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
 

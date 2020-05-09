@@ -1,4 +1,4 @@
-package com.xxbb.framework.v2;
+package com.xxbb.framework.v3;
 
 import com.xxbb.framework.annotation.*;
 import com.xxbb.framework.utils.StringUtils;
@@ -8,10 +8,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -38,17 +39,16 @@ public class DispatcherServlet extends HttpServlet {
     private Map<String, Method> handlerMapping = new HashMap<>();
 
     @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             doDispatch(req, resp);
         } catch (Exception e) {
             resp.getWriter().write("500 Exception" + Arrays.toString(e.getStackTrace()));
-
         }
     }
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config)  {
         //1.加载配置文件
         doLoadConfig(config.getInitParameter("contextConfigLocation"));
         //2.扫描相关的类
@@ -59,8 +59,7 @@ public class DispatcherServlet extends HttpServlet {
         doAutoWired();
         //5.初始化HandlerMapping
         initHandlerMapping();
-        System.out.println("ioc:"+ioc);
-        System.out.println("handlerMapping:"+handlerMapping);
+
         System.out.println("MVC Framework has inited");
     }
 
@@ -178,8 +177,6 @@ public class DispatcherServlet extends HttpServlet {
                             throw new RuntimeException("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->" +
                                     inf.getName() + " has existed!");
                         }
-                        String infBeanName=StringUtils.firstCharToLowerCase(inf.getSimpleName());
-                        ioc.put(infBeanName,instance);
 
                     }
                 }
@@ -261,24 +258,13 @@ public class DispatcherServlet extends HttpServlet {
     private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception{
         String url=req.getRequestURI();
         String contextPath=req.getContextPath();
-        System.out.println(contextPath);
-        System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->"+
-                "url:"+url+",contextPath:"+contextPath);
+        System.out.println(url+"   "+contextPath);
 
         url=url.replaceAll(contextPath,"").replaceAll("/+","/");
-        System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->"+
-                "replacedUrl:"+url);
         if(!this.handlerMapping.containsKey(url)){
-            System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->"+
-                    url+" is not in the container");
-            try {
-                resp.getWriter().write("404 Not Found");
-            } catch (IOException e) {
-                throw new RuntimeException(e.getMessage());
-            }
+            resp.getWriter().write("404 Not Found");
             return;
         }
-
         Method method=this.handlerMapping.get(url);
         //第一个参数：方法所在的实例
         //第二个参数：调用时需要的参数
@@ -300,7 +286,7 @@ public class DispatcherServlet extends HttpServlet {
                 //提取方法中加了注解的参数
                 Annotation[][] annotations=method.getParameterAnnotations();
                 for(int j=0;j<annotations.length;j++){
-                    for(Annotation annotation:annotations[j]){
+                    for(Annotation annotation:annotations[i]){
                         if(annotation instanceof RequestParam){
                             String paramName=((RequestParam)annotation).value().trim();
                             if(!"".equals(paramName)){
@@ -317,15 +303,6 @@ public class DispatcherServlet extends HttpServlet {
         }
         //通过反射获取Method所在类及其类名
         String beanName=StringUtils.firstCharToLowerCase(method.getDeclaringClass().getSimpleName());
-        Object instance=ioc.get(beanName);
-        System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->"+
-                "doDispatcher.instance:"+instance);
-        System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getName() + "--->"+
-                "doDispatcher.method:"+method);
-        try {
-            method.invoke(ioc.get(beanName), req,resp,params.get("name")[0]);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        method.invoke(ioc.get(beanName),req,resp,params.get("name")[0]);
     }
 }
