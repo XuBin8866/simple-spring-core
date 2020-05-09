@@ -6,7 +6,7 @@
   <display-name>Archetype Created Web Application</display-name>
   <servlet>
     <servlet-name>dispatcherServlet</servlet-name>
-    <servlet-class>com.xxbb.framework.v1.DispatcherServlet</servlet-class>
+    <servlet-class>com.xxbb.framework.v2.DispatcherServlet</servlet-class>
     <init-param>
       <param-name>contextConfigLocation</param-name>
       <param-value>classpath:application.properties</param-value>
