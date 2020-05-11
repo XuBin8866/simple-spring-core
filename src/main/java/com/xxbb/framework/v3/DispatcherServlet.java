@@ -128,9 +128,7 @@ public class DispatcherServlet extends HttpServlet {
                 if ("".equals(beanName)) {
                     //截取出类名并将首字母小写,
                     //要求基本数据类型和包装类不使用依赖注入
-                    String preBeanName = field.getType().getName();
-                    int index=preBeanName.lastIndexOf(".");
-                    beanName=StringUtils.firstCharToLowerCase(preBeanName.substring(index+1));
+                    beanName=StringUtils.firstCharToLowerCase(field.getType().getSimpleName());
                 }
                 //强制赋值
                 field.setAccessible(true);
@@ -366,7 +364,7 @@ public class DispatcherServlet extends HttpServlet {
 
         /**
          * 提取传入方法的参数
-         * @param method
+         * @param method 方法
          */
         private void putParamIndexMapping(Method method) {
             //提取方法中加了注解的参数

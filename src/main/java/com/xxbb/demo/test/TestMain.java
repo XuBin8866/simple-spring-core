@@ -13,7 +13,7 @@ import java.net.URL;
 public class TestMain {
     public static void main(String[] args) {
         TestMain testMain=new TestMain();
-        testMain.StringTest();
+        testMain.reflectTest();
 
     }
     public void StringTest(){
@@ -30,6 +30,7 @@ public class TestMain {
             System.out.println(field.getType());
             System.out.println(field.getType().getTypeName());
             System.out.println(field.getType().getName());
+            System.out.println(field.getType().getSimpleName());
         }
     }
     public static void soutTest(){
