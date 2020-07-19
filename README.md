@@ -1,1 +1,1 @@
-简单模拟Spring的IoC、DI和DispatcherServlet功能
+简单模拟Spring的IoC、DI和DispatcherServlet功能，实现逻辑简单
