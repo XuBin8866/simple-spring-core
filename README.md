@@ -1,1 +1,1 @@
-# simple_spring_core
+简单模拟Spring的IoC、DI和DispatcherServlet功能
